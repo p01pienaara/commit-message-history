@@ -27,47 +27,6 @@ def get_commit_messages_between_releases(repo_url, release_tag1, release_tag2):
     repo.close()
     return [commit.message for commit in commit_messages]
 
-def get_commit_messages(repo_url, num_releases=3):
-    """Fetches commit messages from a repository for a specified number of releases.
-
-    Args:
-        repo_url: The URL of the Git repository.
-        num_releases: The number of recent releases to consider.
-
-    Returns:
-        A list of commit messages, grouped by release tag.
-    """
-
-    if not os.path.exists(".temp_repo"):  # Create a temporary directory
-        os.mkdir(".temp_repo")
-
-    os.chdir(".temp_repo")
-    subprocess.run(["git", "clone", repo_url])  # Clone the repository
-
-    repo_name = repo_url.split("/")[-1].replace(".git", "")
-    os.chdir(repo_name)
-
-    # Get release tags
-    release_tags = subprocess.check_output(
-        ["git", "tag", "-l", "--sort=-version:refname"]
-    ).decode("utf-8").splitlines()[:num_releases]
-
-    all_commits = []
-    for i in range(len(release_tags)):
-        if i == len(release_tags) - 1:
-            start_tag = "HEAD"  # Get from beginning to latest tag
-        else:
-            start_tag = release_tags[i + 1]
-
-        commits = subprocess.check_output(
-            ["git", "log", "--pretty=format:%s", f"{start_tag}..{release_tags[i]}"]
-        ).decode("utf-8").splitlines()
-        all_commits.append((release_tags[i], commits))
-
-    os.chdir("../..")  # Clean up
-    subprocess.run(["rm", "-rf", ".temp_repo"])
-    return all_commits
-
 def write_commits_to_file(filename, all_commits):
     """Writes commit messages to a text file.
 

@@ -67,12 +67,12 @@ def compare_dependencies(repo_url, num_releases):
                 "updated": A set of dependencies that likely had a version change.
             }
     """
-    releases = get_latest_releases(repo_url, num_releases=num_releases)
+    releases = get_latest_releases(repo_url, num_releases)
     print(f"releases: {releases}")
 
     return get_diff_between_releases(".temp_repo",releases[num_releases-1], releases[0], "pubspec.yaml")
 
-def parse_git_diff(diff_text):
+def parse_git_diff(repo_url, diff_text):
     """Parses git diff output and extracts dependency information.
 
     Args:
@@ -94,6 +94,26 @@ def parse_git_diff(diff_text):
     for line in diff_text.splitlines():
         if line.startswith("---") or line.startswith("+++"):
             continue  # Skip header lines
+
+        match = re.search(r"name:\s*(.*)$", line)  # Base name
+        if match:
+            if current_dependency is None:
+                current_dependency = {}
+            current_dependency["url"] = repo_url
+            current_dependency["path"] = match.group(1)
+            continue
+
+        match = re.search(r"\-version:\s*(.*)$", line)  # Base old version
+        if match:
+            current_dependency["old_version"] = match.group(1)
+            continue
+
+        match = re.search(r"\+version:\s*(.*)$", line)  # Base new version
+        if match:
+            current_dependency["new_version"] = match.group(1)
+            results.append(current_dependency)
+            current_dependency = None
+            continue
 
         match = re.search(r"^\s*\-\s*ref:\s*(.*)$", line)  # Old version
         if match:
@@ -144,7 +164,7 @@ def update(repo_url, num_releases):
     print("changed:")
     print(changed_dependencies)
 
-    dependenciesJson = parse_git_diff(changed_dependencies)
+    dependenciesJson = parse_git_diff(repo_url, changed_dependencies)
 
     print(dependenciesJson)
 
