@@ -3,6 +3,7 @@ import os
 import subprocess
 from git import Repo
 import json
+import datetime
 
 def get_commit_messages_between_releases(repo_url, release_tag1, release_tag2):
     """Gets all commit messages between two releases in a Git repository.
@@ -38,7 +39,7 @@ def write_commits_to_file(filename, all_commits):
 
     with open(filename, "w") as f:
         for commit in all_commits:
-            f.write(f"- {commit}\n")
+            f.write(f"{commit}")
 
 def read_json_file(filepath):
     """Reads data from a JSON file.
@@ -55,21 +56,25 @@ def read_json_file(filepath):
     return data
 
 def fetch():
-    filepath = "dependencies.json"  # Assuming your JSON data is in this file
+    filepath = "dependencies.json"  
     dependencies = read_json_file(filepath)
-
-    all_commits = []
+    
+    today = datetime.date.today()
+    formatted_date = today.strftime("%d-%m-%Y")
+    all_commits = [f"{formatted_date}"]
     for repo in dependencies:
         path = repo["url"]
-        if os.path.exists(f".temp_repo/{path}"):  # check if repo has already been done
+        old_version = repo["old_version"]
+        new_version = repo["new_version"]
+
+        if os.path.exists(f".temp_repo/{path}"):  # check if repo has already been created
             continue
-        commits_by_release = get_commit_messages_between_releases(path, repo["old_version"], repo["new_version"])
+
+        commits_by_release = get_commit_messages_between_releases(path, old_version, new_version)
         print(commits_by_release)
         repo_name = repo["path"]
         print(f"--- Commits for {repo_name} ---")
-        all_commits.append('')
-        all_commits.append(f"--- Commits for {repo_name} ---")
-        all_commits.append('')
+        all_commits.append(f"\n--- Commits for {repo_name} ({old_version} - {new_version}) ---\n")
         for commit in commits_by_release:
             if "🚀" in commit or "Merge " in commit:
                 continue

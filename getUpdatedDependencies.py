@@ -60,12 +60,6 @@ def compare_dependencies(repo_url, num_releases):
         previous_release: The tag of the previous release (n-1).
 
     Returns:
-        A dictionary:
-            {
-                "added": A set of newly added dependencies.
-                "removed": A set of removed dependencies.
-                "updated": A set of dependencies that likely had a version change.
-            }
     """
     releases = get_latest_releases(repo_url, num_releases)
     print(f"releases: {releases}")
@@ -156,7 +150,6 @@ def write_dependencies_to_file(filename, all_dependencies):
             f.write(f"- {commit}\n")
 
 def update(repo_url, num_releases):
-    # repo_url = 'git@github.com:discovery-ltd/v1-gutenberg-central-app-flutter.git'
     changed_dependencies = compare_dependencies(repo_url, num_releases)
 
     subprocess.run(["rm", "-rf", ".temp_repo"])
