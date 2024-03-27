@@ -1,4 +1,5 @@
 import subprocess
+import os
 from git import Repo
 import re
 import json
@@ -195,3 +196,7 @@ def updateWithRange(repo_url, range):
 
     with open("dependencies.json", "w") as outfile:
         json.dump(dependenciesJson, outfile, indent=4)
+
+def purgeIfNeeded():
+    if os.path.exists(f".temp_repo"):
+        subprocess.run(["rm", "-rf", ".temp_repo"])

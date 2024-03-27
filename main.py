@@ -7,6 +7,7 @@ import getUpdatedDependencies
 
 def main(old_version, new_version):    
     if old_version is not None and new_version is not None:
+        getUpdatedDependencies.purgeIfNeeded()
         getUpdatedDependencies.updateWithRange('git@github.com:discovery-ltd/v1-gutenberg-central-app-flutter.git', range=[new_version,old_version])
         getcommits.fetch()
 
