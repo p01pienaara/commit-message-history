@@ -66,6 +66,23 @@ def compare_dependencies(repo_url, num_releases):
 
     return get_diff_between_releases(".temp_repo",releases[num_releases-1], releases[0], "pubspec.yaml")
 
+def compare_dependencies(repo_url, range):
+    """Compares dependencies between two releases and returns changed dependencies.
+
+    Args:
+        repo_url: The URL of the Git repository.
+        latest_release: The tag of the latest release.
+        previous_release: The tag of the previous release (n-1).
+
+    Returns:
+    """
+    print(f"releases: {range[0], range[1]}")
+    repo = Repo.clone_from(repo_url, ".temp_repo")
+    tags = sorted(repo.tags, key=lambda t: t.commit.committed_datetime, reverse=True)
+    repo.close()
+
+    return get_diff_between_releases(".temp_repo",range[1], range[0], "pubspec.yaml")
+
 def parse_git_diff(repo_url, diff_text):
     """Parses git diff output and extracts dependency information.
 
@@ -151,6 +168,21 @@ def write_dependencies_to_file(filename, all_dependencies):
 
 def update(repo_url, num_releases):
     changed_dependencies = compare_dependencies(repo_url, num_releases)
+
+    subprocess.run(["rm", "-rf", ".temp_repo"])
+
+    print("changed:")
+    print(changed_dependencies)
+
+    dependenciesJson = parse_git_diff(repo_url, changed_dependencies)
+
+    print(dependenciesJson)
+
+    with open("dependencies.json", "w") as outfile:
+        json.dump(dependenciesJson, outfile, indent=4)
+
+def updateWithRange(repo_url, range):
+    changed_dependencies = compare_dependencies(repo_url, range)
 
     subprocess.run(["rm", "-rf", ".temp_repo"])
 
