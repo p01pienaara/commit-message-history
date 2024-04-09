@@ -5,26 +5,30 @@ from git import Repo
 import json
 import datetime
 
-def get_commit_messages_between_releases(repo_url, release_tag1, release_tag2):
+def get_commit_messages_between_releases(repo_url, newer_version, older_version=None):
     """Gets all commit messages between two releases in a Git repository.
 
     Args:
         repo_path: The path to the local Git repository.
-        release_tag1: The tag of the older release.
-        release_tag2: The tag of the newer release.
+        older_version: The tag of the older release.
+        newer_version: The tag of the newer release.
 
     Returns:
         A list of commit messages.
     """
 
     repo = Repo.clone_from(repo_url, f".temp_repo/{repo_url}")
+    commit_messages = []
+    if older_version is not None:
 
-    # Ensure that release_tag1 is older than release_tag2 (if necessary):
-    base = repo.merge_base(release_tag1, release_tag2)  # Find common ancestor
-    if repo.is_ancestor(release_tag2, base):  # release_tag2 is newer
-        release_tag1, release_tag2 = release_tag2, release_tag1
+        # Ensure that release_tag1 is older than release_tag2 (if necessary):
+        base = repo.merge_base(older_version, newer_version)  # Find common ancestor
+        if repo.is_ancestor(newer_version, base):  # release_tag2 is newer
+            older_version, newer_version = newer_version, older_version
 
-    commit_messages = repo.iter_commits(f"{release_tag1}..{release_tag2}")
+        commit_messages = repo.iter_commits(f"{older_version}..{newer_version}")
+    else:
+        commit_messages = repo.iter_commits(f"{newer_version}")
     repo.close()
     return [commit.message for commit in commit_messages]
 
@@ -63,14 +67,21 @@ def fetch():
     formatted_date = today.strftime("%d-%m-%Y")
     all_commits = [f"{formatted_date}"]
     for repo in dependencies:
-        path = repo["url"]
-        old_version = repo["old_version"]
+        print(repo)
+        if "url" not in repo or "new_version" not in repo:
+            print("XXX - ERROR: \n" + repo)
+            continue
+
+        path = repo["url"]        
         new_version = repo["new_version"]
+        old_version = None
+        if "old_version" in repo:
+            old_version = repo["old_version"]
 
         if os.path.exists(f".temp_repo/{path}"):  # check if repo has already been created
             continue
 
-        commits_by_release = get_commit_messages_between_releases(path, old_version, new_version)
+        commits_by_release = get_commit_messages_between_releases(path, new_version, old_version)
         print(commits_by_release)
         repo_name = repo["path"]
         print(f"--- Commits for {repo_name} ---")
