@@ -66,6 +66,9 @@ def fetch():
     today = datetime.date.today()
     formatted_date = today.strftime("%d-%m-%Y")
     all_commits = [f"{formatted_date}"]
+
+    central_old_version = dependencies[0]["old_version"]
+    central_new_version = dependencies[0]["new_version"]
     for repo in dependencies:
         print(repo)
         if "url" not in repo or "new_version" not in repo:
@@ -94,5 +97,6 @@ def fetch():
 
     subprocess.run(["rm", "-rf", ".temp_repo"])
     # Write to file
-    write_commits_to_file("commit_log.txt", all_commits)
+    # write_commits_to_file(f"logs/commit_log_{central_old_version}-{central_new_version}.txt", all_commits)
+    write_commits_to_file(f"logs/commit_log.txt", all_commits)
 
